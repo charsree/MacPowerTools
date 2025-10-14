@@ -47,7 +47,7 @@ open /Applications/MacPowerTools.app
 ###    - Screen Recording permission
 ###    - Accessibility permission
 
-### Build Locally(Not recommended)
+### Build Locally (Not recommended)
 
 1. **Clone or download this repository**
 2. **Navigate to the MacPowerTools directory**

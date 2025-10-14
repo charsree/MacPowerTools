@@ -25,7 +25,7 @@ A powerful macOS utility that brings Windows PowerToys-like functionality to you
 
 ## 📦 Installation
 
-### Install with brew
+### Install with brew (Recommended)
 
 ### 1. Add the tap
 ```bash
@@ -47,7 +47,7 @@ open /Applications/MacPowerTools.app
 ###    - Screen Recording permission
 ###    - Accessibility permission
 
-### Quick Start
+### Build Locally(Not recommended)
 
 1. **Clone or download this repository**
 2. **Navigate to the MacPowerTools directory**

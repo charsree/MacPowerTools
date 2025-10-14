@@ -1,9 +1,11 @@
-# Build outputs
+# Build artifacts
 build/
-*.o
-*.dSYM/
+*.app/
 
-# macOS system files
+# Homebrew tools folder
+homebrew-tools/
+
+# macOS
 .DS_Store
 .DS_Store?
 ._*
@@ -15,20 +17,10 @@ Thumbs.db
 # Xcode
 *.xcodeproj/
 *.xcworkspace/
-xcuserdata/
 DerivedData/
-*.moved-aside
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
 
-# App bundles (if you want to exclude them from source control)
-*.app/
+# Logs
+*.log
 
 # Temporary files
 *.tmp

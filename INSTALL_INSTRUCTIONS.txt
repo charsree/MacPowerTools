@@ -1,0 +1,50 @@
+🚀 Mac Power Tools - Installation Instructions
+
+📦 What's Included:
+• MacPowerTools.app - Combined Text Extractor + Clipboard History
+
+⚡ Features:
+• Text Extractor: Press Cmd+Shift+T to extract text from screenshots
+• Clipboard History: Press Cmd+Shift+V to view clipboard history with formatting
+
+🔧 Installation Steps:
+
+1. EXTRACT THE ZIP FILE
+   - Double-click MacPowerTools_Fixed.zip to extract
+   - You'll see MacPowerTools.app
+
+2. MOVE TO APPLICATIONS (Recommended)
+   - Drag MacPowerTools.app to your Applications folder
+   - This makes it easier to find and manage
+
+3. FIRST TIME OPENING (IMPORTANT!)
+   - DON'T double-click the app yet!
+   - RIGHT-CLICK on MacPowerTools.app
+   - Select "Open" from the menu
+   - Click "Open" when macOS warns about unidentified developer
+   - This is a one-time security override
+
+4. GRANT PERMISSIONS
+   When you first run the app, macOS will ask for permissions:
+   - Allow "Accessibility" access (for global hotkeys)
+   - Allow "Screen Recording" access (for screenshots)
+   - These are required for the app to work
+
+5. VERIFY IT'S WORKING
+   - Look for a ⚡ lightning bolt icon in your menu bar
+   - Try Cmd+Shift+T (text extraction from screenshot)
+   - Try Cmd+Shift+V (clipboard history)
+
+🔧 Auto-Start Setup (Optional):
+   - System Settings → General → Login Items
+   - Click "+" and add MacPowerTools.app
+   - App will start automatically when you log in
+
+❓ Troubleshooting:
+   - If app won't open: Use right-click → Open method
+   - If hotkeys don't work: Check Accessibility permissions
+   - If screenshots fail: Check Screen Recording permissions
+
+💡 The app runs in the background - no dock icon, just the menu bar ⚡ icon!
+
+Enjoy your new Mac Power Tools! 🎉

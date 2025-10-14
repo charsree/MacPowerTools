@@ -1,0 +1,52 @@
+# Build outputs
+build/
+*.o
+*.dSYM/
+
+# macOS system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# App bundles (if you want to exclude them from source control)
+*.app/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Archives
+*.zip
+*.tar.gz
+*.dmg
+
+# Kiro
+.kiro
+test.swift

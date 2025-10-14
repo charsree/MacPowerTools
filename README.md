@@ -25,9 +25,27 @@ A powerful macOS utility that brings Windows PowerToys-like functionality to you
 
 ## 📦 Installation
 
-### Prerequisites
-- **macOS 10.15 (Catalina) or later**
-- **Xcode Command Line Tools**: `xcode-select --install`
+### Install with brew
+
+# 1. Add the tap
+```bash
+brew tap charsree/tools
+```
+# 2. Install the app
+```bash
+brew install macpowertools
+```
+# 3. Copy to Applications folder
+```bash
+cp -r /opt/homebrew/opt/macpowertools/MacPowerTools.app /Applications/
+```
+# 4. Launch the app
+```bash
+open /Applications/MacPowerTools.app
+```
+# 5. Grant permissions when prompted:
+#    - Screen Recording permission
+#    - Accessibility permission
 
 ### Quick Start
 

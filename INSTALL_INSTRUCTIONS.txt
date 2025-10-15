@@ -1,50 +1,102 @@
-🚀 Mac Power Tools - Installation Instructions
+# Mac Power Tools - Installation Instructions
 
-📦 What's Included:
-• MacPowerTools.app - Combined Text Extractor + Clipboard History
+## Quick Install (Recommended)
 
-⚡ Features:
-• Text Extractor: Press Cmd+Shift+T to extract text from screenshots
-• Clipboard History: Press Cmd+Shift+V to view clipboard history with formatting
+### 1. Install via Homebrew
+```bash
+# Add the tap
+brew tap charsree/tools
 
-🔧 Installation Steps:
+# Install the app
+brew install macpowertools
 
-1. EXTRACT THE ZIP FILE
-   - Double-click MacPowerTools_Fixed.zip to extract
-   - You'll see MacPowerTools.app
+# Copy to Applications
+cp -r /opt/homebrew/opt/macpowertools/MacPowerTools.app /Applications/
 
-2. MOVE TO APPLICATIONS (Recommended)
-   - Drag MacPowerTools.app to your Applications folder
-   - This makes it easier to find and manage
+# Launch the app
+open /Applications/MacPowerTools.app
+```
 
-3. FIRST TIME OPENING (IMPORTANT!)
-   - DON'T double-click the app yet!
-   - RIGHT-CLICK on MacPowerTools.app
-   - Select "Open" from the menu
-   - Click "Open" when macOS warns about unidentified developer
-   - This is a one-time security override
+### 2. Grant Permissions (Automatic)
+The app will automatically request permissions when first launched:
 
-4. GRANT PERMISSIONS
-   When you first run the app, macOS will ask for permissions:
-   - Allow "Accessibility" access (for global hotkeys)
-   - Allow "Screen Recording" access (for screenshots)
-   - These are required for the app to work
+**Screen Recording Permission:**
+- Required for text extraction feature
+- Click "Allow" when prompted
+- Or manually: System Preferences → Privacy & Security → Screen Recording → Add MacPowerTools.app
 
-5. VERIFY IT'S WORKING
-   - Look for a ⚡ lightning bolt icon in your menu bar
-   - Try Cmd+Shift+T (text extraction from screenshot)
-   - Try Cmd+Shift+V (clipboard history)
+**Accessibility Permission:**
+- Required for global hotkeys and auto-paste
+- Click "Allow" when prompted  
+- Or manually: System Preferences → Privacy & Security → Accessibility → Add MacPowerTools.app
 
-🔧 Auto-Start Setup (Optional):
-   - System Settings → General → Login Items
-   - Click "+" and add MacPowerTools.app
-   - App will start automatically when you log in
+**Important:** Restart the app after granting permissions for full functionality.
 
-❓ Troubleshooting:
-   - If app won't open: Use right-click → Open method
-   - If hotkeys don't work: Check Accessibility permissions
-   - If screenshots fail: Check Screen Recording permissions
+### 3. Auto-Start Setup (Optional)
+The app automatically adds itself to login items. To verify:
+- System Preferences → Users & Groups → Login Items
+- MacPowerTools should be listed
 
-💡 The app runs in the background - no dock icon, just the menu bar ⚡ icon!
+## Manual Build (Advanced)
 
-Enjoy your new Mac Power Tools! 🎉
+### Prerequisites
+- macOS 10.15+ with Xcode Command Line Tools
+- Run: `xcode-select --install` if needed
+
+### Build Steps
+```bash
+# Clone/download the project
+cd MacPowerTools
+
+# Build the app
+chmod +x build.sh
+./build.sh
+
+# Create app bundle
+chmod +x create_apps.sh
+./create_apps.sh
+
+# Install to Applications
+cp -r MacPowerTools.app /Applications/
+open /Applications/MacPowerTools.app
+```
+
+## Usage
+
+### Keyboard Shortcuts
+- **Cmd+Shift+T**: Extract text from screenshot
+- **Cmd+Shift+V**: Show clipboard history and paste selected item
+
+### Menu Bar
+Look for the ⚡ lightning bolt icon in your menu bar for quick access.
+
+## Troubleshooting
+
+**App doesn't respond to hotkeys:**
+- Grant Accessibility permission and restart app
+
+**Text extraction not working:**
+- Grant Screen Recording permission and restart app
+
+**Clipboard items don't paste:**
+- Ensure Accessibility permission is granted
+- This permission is required for auto-paste functionality
+
+**Permission reset (if needed):**
+```bash
+sudo tccutil reset ScreenCapture com.macpowertools.app
+sudo tccutil reset Accessibility com.macpowertools.app
+pkill MacPowerTools
+open /Applications/MacPowerTools.app
+```
+
+## Features
+
+✅ **Text Extractor**: OCR from any screen area
+✅ **Clipboard History**: 50 items with rich formatting
+✅ **Auto-paste**: Select item to paste immediately
+✅ **Menu Bar Integration**: Quick access to all features
+✅ **Auto-start**: Launches on login
+✅ **Privacy-focused**: All processing done locally
+
+Enjoy your enhanced Mac productivity! ⚡

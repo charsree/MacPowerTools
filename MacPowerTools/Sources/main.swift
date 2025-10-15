@@ -13,6 +13,7 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
     var textExtractorHotKeyRef: EventHotKeyRef?
     var clipboardHistoryHotKeyRef: EventHotKeyRef?
     let maxHistoryItems = 50
+    var isPasting = false
     
     struct ClipboardItem {
         let content: String
@@ -31,11 +32,12 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
             
             // Create preview (first 50 characters) with formatting indicator
             let basePreview = String(content.prefix(50)).replacingOccurrences(of: "\n", with: " ")
-            self.preview = hasFormatting ? "🎨 \(basePreview)" : basePreview
+            self.preview = hasFormatting ? "[F] \(basePreview)" : basePreview
         }
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        checkAndRequestPermissions()
         setupStatusBar()
         registerGlobalHotkeys()
         startClipboardMonitoring()
@@ -44,9 +46,55 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         print("📋 Clipboard History: Press Cmd+Shift+V")
     }
     
+    func checkAndRequestPermissions() {
+        // Check Screen Recording permission
+        let screenRecordingGranted = CGPreflightScreenCaptureAccess()
+        if !screenRecordingGranted {
+            showNotification(title: "Permission Required", message: "Please grant Screen Recording permission in System Preferences")
+            CGRequestScreenCaptureAccess()
+        }
+        
+        // Check Accessibility permission
+        let accessibilityGranted = AXIsProcessTrusted()
+        if !accessibilityGranted {
+            showNotification(title: "Permission Required", message: "Please grant Accessibility permission in System Preferences")
+            
+            // Request accessibility permission
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+            AXIsProcessTrustedWithOptions(options as CFDictionary)
+        }
+        
+        if !screenRecordingGranted || !accessibilityGranted {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self.showPermissionAlert()
+            }
+        }
+    }
+    
+    func showPermissionAlert() {
+        let alert = NSAlert()
+        alert.messageText = "Permissions Required"
+        alert.informativeText = "Mac Power Tools needs:\n\n• Screen Recording (for text extraction)\n• Accessibility (for global hotkeys and pasting)\n\nPlease grant these permissions in System Preferences and restart the app."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Open System Preferences")
+        alert.addButton(withTitle: "OK")
+        
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy")!)
+        }
+    }
+    
     func setupStatusBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem?.button?.title = "⚡"
+        
+        // Create attributed string with baseline offset
+        let attributedTitle = NSAttributedString(string: "⌬", attributes: [
+            .font: NSFont.systemFont(ofSize: 24),
+            .baselineOffset: -2
+        ])
+        
+        statusItem?.button?.attributedTitle = attributedTitle
         statusItem?.button?.toolTip = "Mac Power Tools - Cmd+Shift+T (Text) | Cmd+Shift+V (Clipboard)"
         
         updateStatusBarMenu()
@@ -126,6 +174,8 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
     }
     
     func checkClipboardChanges() {
+        if isPasting { return }
+        
         let pasteboard = NSPasteboard.general
         let currentChangeCount = pasteboard.changeCount
         
@@ -193,10 +243,17 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         let index = sender.tag
         if index < clipboardHistory.count {
             let item = clipboardHistory[index]
+            
+            isPasting = true
             copyToClipboardWithFormatting(item)
+            lastClipboardChangeCount = NSPasteboard.general.changeCount
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 self.simulatePaste()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    self.isPasting = false
+                }
             }
             
             let formatInfo = item.hasFormatting ? " (with formatting)" : ""
@@ -283,13 +340,13 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         
         // Text Extractor section
-        menu.addItem(NSMenuItem(title: "📝 Text Extractor", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Text Extractor", action: nil, keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "   Extract Text (Cmd+Shift+T)", action: #selector(captureAndExtractText), keyEquivalent: ""))
         
         menu.addItem(NSMenuItem.separator())
         
         // Clipboard History section
-        menu.addItem(NSMenuItem(title: "📋 Clipboard History", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Clipboard History", action: nil, keyEquivalent: ""))
         
         if clipboardHistory.isEmpty {
             menu.addItem(NSMenuItem(title: "   No clipboard history", action: nil, keyEquivalent: ""))
@@ -361,11 +418,17 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         tableView.dataSource = dataSource
         tableView.delegate = dataSource
         
+        // Store the data source in the window to prevent deallocation
+        objc_setAssociatedObject(window, "dataSource", dataSource, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        
         tableView.doubleAction = #selector(ClipboardHistoryDataSource.doubleClickAction(_:))
         tableView.target = dataSource
         
         scrollView.documentView = tableView
         window.contentView?.addSubview(scrollView)
+        
+        // Reload the table data
+        tableView.reloadData()
         
         return window
     }
@@ -390,18 +453,18 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         
         pasteboard.setString(item.content, forType: .string)
         
-        if let rtfData = item.rtfData {
+        if let rtfData: Data = item.rtfData {
             pasteboard.setData(rtfData, forType: .rtf)
         }
         
-        if let htmlData = item.htmlData {
+        if let htmlData: Data = item.htmlData {
             pasteboard.setData(htmlData, forType: .html)
         }
     }
     
     func simulatePaste() {
-        let cmdVDown = CGEvent(keyboardEventSource: nil, virtualKey: 0x09, keyDown: true)
-        let cmdVUp = CGEvent(keyboardEventSource: nil, virtualKey: 0x09, keyDown: false)
+        let cmdVDown = CGEvent(keyboardEventSource: nil, virtualKey: CGKeyCode(kVK_ANSI_V), keyDown: true)
+        let cmdVUp = CGEvent(keyboardEventSource: nil, virtualKey: CGKeyCode(kVK_ANSI_V), keyDown: false)
         
         cmdVDown?.flags = .maskCommand
         cmdVUp?.flags = .maskCommand
@@ -452,7 +515,7 @@ class ClipboardHistoryDataSource: NSObject, NSTableViewDataSource, NSTableViewDe
     @objc func doubleClickAction(_ sender: NSTableView) {
         let selectedRow = sender.selectedRow
         if selectedRow >= 0 && selectedRow < history.count {
-            let item = history[selectedRow]
+            let item: MacPowerToolsApp.ClipboardItem = history[selectedRow]
             
             if let appDelegate = NSApplication.shared.delegate as? MacPowerToolsApp {
                 appDelegate.copyToClipboardWithFormatting(item)

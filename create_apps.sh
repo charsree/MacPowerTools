@@ -6,13 +6,19 @@
 echo "📦 Creating macOS Application Bundle..."
 
 # Create MacPowerTools.app
-echo "⚡ Creating MacPowerTools.app..."
+echo "⌬ Creating MacPowerTools.app..."
 mkdir -p "MacPowerTools.app/Contents/MacOS"
 mkdir -p "MacPowerTools.app/Contents/Resources"
 
 # Copy executable
 cp "build/MacPowerTools" "MacPowerTools.app/Contents/MacOS/MacPowerTools"
 chmod +x "MacPowerTools.app/Contents/MacOS/MacPowerTools"
+
+# Copy icon if it exists
+if [ -f "MacPowerTools.icns" ]; then
+    cp "MacPowerTools.icns" "MacPowerTools.app/Contents/Resources/"
+    echo "🎨 Added app icon"
+fi
 
 # Create Info.plist for MacPowerTools
 cat > "MacPowerTools.app/Contents/Info.plist" << 'EOF'
@@ -36,6 +42,8 @@ cat > "MacPowerTools.app/Contents/Info.plist" << 'EOF'
     <string>APPL</string>
     <key>CFBundleSignature</key>
     <string>MPWT</string>
+    <key>CFBundleIconFile</key>
+    <string>MacPowerTools</string>
     <key>LSMinimumSystemVersion</key>
     <string>10.15</string>
     <key>LSUIElement</key>

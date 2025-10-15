@@ -11,7 +11,7 @@ echo "🔨 Building Mac Power Tools..."
 mkdir -p build
 
 # Build Combined Mac Power Tools
-echo "⚡ Building Mac Power Tools (Combined App)..."
+echo "⌬ Building Mac Power Tools (Combined App)..."
 cd MacPowerTools/Sources
 swiftc -o ../../build/MacPowerTools main.swift -framework Cocoa -framework Vision -framework Carbon -framework AVFoundation
 cd ../..
@@ -25,10 +25,12 @@ echo "📍 Executable created in build/ directory:"
 echo "   • MacPowerTools - Combined Text Extractor + Clipboard History"
 echo ""
 echo "🚀 Features:"
-echo "   📝 Text Extractor: Press Cmd+Shift+T to extract text from screenshots"
-echo "   📋 Clipboard History: Press Cmd+Shift+V to view clipboard history with formatting"
+echo "   Text Extractor: Press Cmd+Shift+T to extract text from screenshots"
+echo "   Clipboard History: Press Cmd+Shift+V to view clipboard history with formatting"
 echo ""
 echo "🚀 To run:"
 echo "   ./build/MacPowerTools &"
 echo ""
-echo "💡 Single app with ⚡ menu bar icon for both features"
+echo "💡 Single app with ⌬ menu bar icon for both features"
+
+

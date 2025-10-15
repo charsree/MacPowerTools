@@ -22,60 +22,30 @@ A powerful macOS utility that brings Windows PowerToys-like functionality to you
 - Full history window with timestamps
 - Smart preview with formatting indicators
 - Double-click to restore items with original formatting
+- **Auto-paste functionality** - select an item to paste it immediately
 
-## 📦 Installation
+## 📦 Quick Installation (Recommended)
 
-### Install with brew (Recommended)
-
-### 1. Add the tap
+### 1. Install with Homebrew
 ```bash
+# Add the tap
 brew tap charsree/tools
-```
-### 2. Install the app
-```bash
+
+# Install the app
 brew install macpowertools
-```
-### 3. Copy to Applications folder
-```bash
+
+# Copy to Applications and launch
 cp -r /opt/homebrew/opt/macpowertools/MacPowerTools.app /Applications/
-```
-### 4. Launch the app
-```bash
 open /Applications/MacPowerTools.app
 ```
-### 5. Grant permissions when prompted:
-###    - Screen Recording permission
-###    - Accessibility permission
 
-### Build Locally (Not recommended)
+### 2. Grant Permissions (Automatic)
+When you first launch the app, it will automatically:
+- Request **Screen Recording** permission (for text extraction)
+- Request **Accessibility** permission (for global hotkeys and pasting)
+- Show a dialog to guide you through the permission setup
 
-1. **Clone or download this repository**
-2. **Navigate to the MacPowerTools directory**
-3. **Build the application**:
-   ```bash
-   chmod +x build.sh
-   ./build.sh
-   ```
-4. **Create distributable app bundle** (optional):
-   ```bash
-   chmod +x create_apps.sh
-   ./create_apps.sh
-   ```
-
-### Running the Application
-
-**Option 1: Run from command line**
-```bash
-./build/MacPowerTools &
-```
-
-**Option 2: Use the app bundle**
-```bash
-# After running create_apps.sh
-open MacPowerTools.app
-```
-
-The application will appear as a **⚡ lightning bolt icon** in your menu bar.
+**That's it!** The app will appear as a **⚡ lightning bolt icon** in your menu bar.
 
 ## 🎯 Usage
 
@@ -86,133 +56,107 @@ The application will appear as a **⚡ lightning bolt icon** in your menu bar.
 4. Extracted text is automatically copied to your clipboard
 5. You'll see a notification with the results
 
-**Alternative**: Click the ⚡ menu bar icon → "Extract Text"
-
 ### Clipboard History
 1. The app automatically tracks your clipboard in the background
 2. Press `Cmd+Shift+V` to view your clipboard history popup
-3. Click any item to copy it back to clipboard
-4. For full history window, use "Show Full History Window"
-
-**Menu Bar Access**: Click the ⚡ icon to see recent clipboard items with formatting indicators (🎨 for formatted content)
+3. **Click any item to paste it immediately** where your cursor is
+4. Items with 🎨 indicator have rich formatting preserved
 
 ### Menu Bar Interface
-The unified ⚡ menu bar icon provides access to:
+Click the ⚡ icon to access:
 - Text extraction functionality
 - Recent clipboard items (last 5)
 - Full clipboard history window
 - Clear history option
-- Quit application
 
-## 🔒 Permissions Setup
+## 🔒 Permissions (Handled Automatically)
 
-### First Run Requirements
-When you first launch Mac Power Tools, macOS will request permissions:
+The app will automatically request these permissions on first launch:
 
-1. **Screen Recording Permission** (for Text Extractor)
-   - System Preferences → Security & Privacy → Privacy → Screen Recording
-   - Add and enable MacPowerTools
+### Screen Recording Permission
+- **Purpose**: Capture screenshots for text extraction
+- **When prompted**: Click "Allow" or go to System Preferences → Privacy & Security → Screen Recording
 
-2. **Accessibility Permission** (for global hotkeys)
-   - System Preferences → Security & Privacy → Privacy → Accessibility
-   - Add and enable MacPowerTools
+### Accessibility Permission  
+- **Purpose**: Global hotkeys (`Cmd+Shift+T`, `Cmd+Shift+V`) and auto-paste functionality
+- **When prompted**: Click "Allow" or go to System Preferences → Privacy & Security → Accessibility
 
-### Granting Permissions
-1. Open **System Preferences** (or **System Settings** on macOS 13+)
-2. Navigate to **Security & Privacy** → **Privacy**
-3. Select **Screen Recording** and add MacPowerTools
-4. Select **Accessibility** and add MacPowerTools
-5. Restart the application after granting permissions
+**Important**: After granting permissions, restart the app for full functionality.
 
-## 🔄 Auto-Start on Login
+## 🔄 Auto-Start Setup
 
-To launch Mac Power Tools automatically when you log in:
+To make Mac Power Tools start automatically when you log in:
 
+**Option 1: Automatic (when installing via Homebrew)**
+The app automatically adds itself to login items.
+
+**Option 2: Manual Setup**
 1. **System Preferences** → **Users & Groups** → **Login Items**
-2. Click **+** and add:
-   - `MacPowerTools/build/MacPowerTools` (command line version)
-   - OR `MacPowerTools.app` (app bundle version)
+2. Click **+** and add `/Applications/MacPowerTools.app`
 
-## 🛠 Technical Details
+## 🛠 Manual Build (Advanced Users)
 
-### Architecture
-- **Single Swift application** with dual functionality
-- **Frameworks**: Cocoa, Vision, Carbon, AVFoundation
-- **Background operation** with menu bar interface
-- **Memory efficient**: < 50MB RAM usage
-- **Local processing**: No internet connection required
+### Prerequisites
+- macOS 10.15+ with Xcode Command Line Tools
+- Swift compiler available
 
-### Text Extraction
-- Uses Apple's **Vision framework** for OCR
-- Supports **multiple languages** automatically
-- **High accuracy** text recognition
-- Integrates with macOS screenshot utility
-- Processes images locally for privacy
-
-### Clipboard Management
-- **Real-time monitoring** (0.3-second intervals)
-- **Rich text preservation** (RTF, HTML formatting)
-- **Smart deduplication** prevents duplicate entries
-- **Memory-based storage** (clears on restart)
-- **Configurable history limit** (default: 50 items)
-
-### Global Hotkeys
-- **Carbon Event Manager** for system-wide shortcuts
-- **Cmd+Shift+T**: Text extraction
-- **Cmd+Shift+V**: Clipboard history
-- **Event-driven architecture** for responsive performance
-
-## 🔧 Build Process
-
-### Manual Build
+### Build Steps
 ```bash
-# Navigate to source directory
-cd MacPowerTools/Sources
+# Clone the repository
+git clone <repository-url>
+cd MacPowerTools
 
-# Compile with required frameworks
-swiftc -o ../../build/MacPowerTools main.swift \
-  -framework Cocoa \
-  -framework Vision \
-  -framework Carbon \
-  -framework AVFoundation
+# Build the application
+chmod +x build.sh
+./build.sh
 
-# Make executable
-chmod +x ../../build/MacPowerTools
+# Create app bundle
+chmod +x create_apps.sh
+./create_apps.sh
+
+# Copy to Applications
+cp -r MacPowerTools.app /Applications/
+open /Applications/MacPowerTools.app
 ```
-
-### App Bundle Creation
-The `create_apps.sh` script creates a proper macOS application bundle with:
-- **Info.plist** configuration
-- **LSUIElement** for menu bar-only operation
-- **Proper bundle structure** for distribution
-- **Code signing preparation**
 
 ## 📋 Keyboard Shortcuts Reference
 
 | Action | Shortcut | Description |
 |--------|----------|-------------|
 | Extract Text | `Cmd+Shift+T` | Capture screenshot and extract text |
-| Clipboard History | `Cmd+Shift+V` | Show clipboard history popup |
+| Clipboard History | `Cmd+Shift+V` | Show clipboard history and paste selected item |
 
 ## 🔍 Troubleshooting
 
-### Text Extractor Issues
-- **No text detected**: Ensure clear, readable text in the selected area
-- **Permission denied**: Grant Screen Recording permissions
-- **Hotkey not working**: Grant Accessibility permissions
-- **Poor accuracy**: Try capturing larger text or better contrast
+### Common Issues
 
-### Clipboard History Issues
-- **Not tracking**: Grant Accessibility permissions and restart app
-- **Hotkey not responding**: Check Accessibility permissions
-- **Formatting lost**: Ensure source application supports rich text copying
-- **History not showing**: Restart the application
+**App doesn't respond to hotkeys**
+- Grant Accessibility permission in System Preferences
+- Restart the app after granting permissions
 
-### General Issues
-- **App won't start**: Verify macOS 10.15+ and Xcode Command Line Tools
-- **Build fails**: Run `xcode-select --install`
-- **Menu bar icon missing**: Check if app is running in Activity Monitor
-- **High CPU usage**: Restart the application
+**Text extraction not working**
+- Grant Screen Recording permission in System Preferences
+- Ensure you're selecting clear, readable text
+
+**Clipboard items don't paste**
+- Ensure Accessibility permission is granted
+- The app needs this permission to simulate `Cmd+V` keypress
+
+**App not starting automatically**
+- Check System Preferences → Users & Groups → Login Items
+- Add `/Applications/MacPowerTools.app` if missing
+
+### Permission Reset
+If permissions seem broken:
+```bash
+# Reset permissions (requires admin password)
+sudo tccutil reset ScreenCapture com.macpowertools.app
+sudo tccutil reset Accessibility com.macpowertools.app
+
+# Restart the app
+pkill MacPowerTools
+open /Applications/MacPowerTools.app
+```
 
 ## 🔐 Privacy & Security
 
@@ -227,74 +171,21 @@ Mac Power Tools:
 
 - **Operating System**: macOS 10.15 (Catalina) or later
 - **Architecture**: Intel x64 or Apple Silicon (Universal)
-- **Memory**: Minimal impact (< 50MB)
+- **Memory**: < 50MB RAM usage
 - **Storage**: < 5MB application size
-- **Permissions**: Screen Recording, Accessibility
-
-## 🚀 Distribution
-
-### For Personal Use
-- Use the built executable: `./build/MacPowerTools`
-- Or create app bundle: `MacPowerTools.app`
-
-### For Sharing
-
-**Option 1: App Bundle Only (Recommended)**
-1. Run `./create_apps.sh` to create `MacPowerTools.app`
-2. Compress only the `.app` bundle:
-   ```bash
-   zip -r MacPowerTools.zip MacPowerTools.app
-   ```
-3. Share the zip file with recipients
-4. Include `INSTALL_INSTRUCTIONS.txt` for setup guidance
-
-**Option 2: Source Code Distribution**
-When zipping the entire project folder, **exclude these files/folders**:
-
-```bash
-# Create clean distribution zip
-zip -r MacPowerTools-Source.zip MacPowerTools/ \
-  -x "MacPowerTools/build/*" \
-  -x "MacPowerTools/.DS_Store" \
-  -x "MacPowerTools/*/.DS_Store" \
-  -x "MacPowerTools/*.app/*" \
-  -x "MacPowerTools/*.zip" \
-  -x "MacPowerTools/*.log"
-```
-
-**Files to EXCLUDE when zipping:**
-- `build/` directory (compiled executables)
-- `.DS_Store` files (macOS system files)
-- `*.app/` bundles (if distributing source)
-- `*.zip`, `*.tar.gz` archives
-- `*.log` files
-- IDE files (`.vscode/`, `.idea/`)
-- Temporary files (`*.tmp`, `*~`)
-
-**Files to INCLUDE:**
-- `MacPowerTools/Sources/main.swift` (source code)
-- `build.sh` and `create_apps.sh` (build scripts)
-- `README.md` (documentation)
-- `INSTALL_INSTRUCTIONS.txt` (user guide)
-- `.gitignore` (for developers)
-
-### Distribution Tips
-- **For end users**: Share only `MacPowerTools.app` in a zip
-- **For developers**: Share source code without build artifacts
-- **Always include**: Setup instructions and permission requirements
-- **Test**: Verify the zip works on a clean Mac before sharing
+- **Permissions**: Screen Recording, Accessibility (requested automatically)
 
 ## 🎉 Getting Started
 
-1. **Build** the application using `./build.sh`
-2. **Run** with `./build/MacPowerTools &`
-3. **Grant permissions** when prompted
-4. **Look for** the ⚡ icon in your menu bar
-5. **Try** `Cmd+Shift+T` for text extraction
-6. **Try** `Cmd+Shift+V` for clipboard history
+1. **Install**: Use Homebrew or build manually
+2. **Launch**: Open `/Applications/MacPowerTools.app`
+3. **Grant permissions**: Follow the automatic prompts
+4. **Look for**: The ⚡ icon in your menu bar
+5. **Try**: `Cmd+Shift+T` for text extraction
+6. **Try**: `Cmd+Shift+V` for clipboard history with auto-paste
 
 ---
 
 **Enjoy your enhanced Mac productivity!** ⚡
 
-*Mac Power Tools brings essential Windows PowerToys functionality to macOS in a single, lightweight application.*
+*Mac Power Tools brings essential Windows PowerToys functionality to macOS with automatic setup and seamless integration.*

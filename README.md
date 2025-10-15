@@ -103,7 +103,7 @@ The app automatically adds itself to login items.
 ### Build Steps
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/charsree/MacPowerTools.git
 cd MacPowerTools
 
 # Build the application

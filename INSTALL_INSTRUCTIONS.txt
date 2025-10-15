@@ -10,8 +10,8 @@ brew tap charsree/tools
 # Install the app
 brew install macpowertools
 
-# Copy to Applications
-cp -r /opt/homebrew/opt/macpowertools/MacPowerTools.app /Applications/
+# Copy to Applications (works on Intel and Apple Silicon)
+cp -r $(brew --prefix)/opt/macpowertools/MacPowerTools.app /Applications/
 
 # Launch the app
 open /Applications/MacPowerTools.app

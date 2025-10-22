@@ -1,6 +1,6 @@
-# Mac Power Tools
+# Mac Power Tools ⌬
 
-A powerful macOS utility that brings Windows PowerToys-like functionality to your Mac in a single, unified application.
+A powerful macOS utility that enhances your productivity with advanced screen text extraction and intelligent clipboard management.
 
 ## 🚀 Features
 
@@ -23,6 +23,26 @@ A powerful macOS utility that brings Windows PowerToys-like functionality to you
 - Smart preview with formatting indicators
 - Double-click to restore items with original formatting
 - **Auto-paste functionality** - select an item to paste it immediately
+
+## 📋 Keyboard Shortcuts Reference
+
+| Action | Default Shortcut | Description |
+|--------|----------|-------------|
+| Extract Text | `Cmd+Shift+T` | Capture screenshot and extract text |
+| Clipboard History | `Cmd+Shift+V` | Show clipboard history and paste selected item |
+
+### 🎛️ Custom Hotkeys
+You can customize both hotkeys through the **Preferences** menu:
+1. Click the ⌬ icon in your menu bar
+2. Select **"Preferences..."**
+3. Modify the hotkey combinations in the text fields
+4. Click **"Save"** to apply changes immediately
+
+**Supported modifiers**: `cmd`, `shift`, `alt`/`option`, `ctrl`/`control`
+**Supported keys**: Any letter `a-z`
+**Examples**: `cmd+alt+t`, `ctrl+shift+v`, `cmd+option+s`
+
+The menu bar will automatically update to show your current hotkey combinations.
 
 ## 📦 Quick Installation (Recommended)
 
@@ -67,7 +87,7 @@ Mac Power Tools uses a **smart permission system**:
 1. The app automatically tracks your clipboard in the background
 2. Press `Cmd+Shift+V` to view your clipboard history popup
 3. **Click any item to paste it immediately** where your cursor is
-4. Items with 🎨 indicator have rich formatting preserved
+4. Items with [F] indicator have rich formatting preserved
 
 ### Menu Bar Interface
 Click the ⌬ icon to access:
@@ -78,21 +98,17 @@ Click the ⌬ icon to access:
 - **Custom hotkey preferences**
 - **Login items management**
 
-## 🔒 Permissions (Smart System)
-
-The app uses a **smart permission system** with no startup dialogs:
+## 🔒 Permissions
 
 ### Screen Recording Permission
 - **Purpose**: Capture screenshots for text extraction
-- **When requested**: Only when you first use Cmd+Shift+T (or custom hotkey)
+- **When requested**: When you first use Cmd+Shift+T (or custom hotkey)
 - **System dialog**: macOS shows standard permission request
 
 ### Accessibility Permission  
 - **Purpose**: Global hotkeys and auto-paste functionality
-- **When requested**: Only when you first use Cmd+Shift+V (or custom hotkey)
+- **When requested**: When you first use Cmd+Shift+V (or custom hotkey)
 - **System dialog**: macOS shows standard permission request
-
-**Clean Experience**: No permission popups on startup - only when you actually use the features!
 
 ## 🚀 Login Items Management
 
@@ -105,7 +121,7 @@ The app uses a **smart permission system** with no startup dialogs:
 1. **System Preferences** → **Users & Groups** → **Login Items**
 2. Click **+** and add `/Applications/MacPowerTools.app`
 
-## 🛠 Manual Build (Advanced Users)
+## 🛠 Manual Build
 
 ### Prerequisites
 - macOS 10.15+ with Xcode Command Line Tools
@@ -130,25 +146,6 @@ cp -r MacPowerTools.app /Applications/
 open /Applications/MacPowerTools.app
 ```
 
-## 📋 Keyboard Shortcuts Reference
-
-| Action | Default Shortcut | Description |
-|--------|----------|-------------|
-| Extract Text | `Cmd+Shift+T` | Capture screenshot and extract text |
-| Clipboard History | `Cmd+Shift+V` | Show clipboard history and paste selected item |
-
-### 🎛️ Custom Hotkeys
-You can customize both hotkeys through the **Preferences** menu:
-1. Click the ⚡ icon in your menu bar
-2. Select **"Preferences..."**
-3. Modify the hotkey combinations in the text fields
-4. Click **"Save"** to apply changes immediately
-
-**Supported modifiers**: `cmd`, `shift`, `alt`/`option`, `ctrl`/`control`
-**Supported keys**: Any letter `a-z`
-**Examples**: `cmd+alt+t`, `ctrl+shift+v`, `cmd+option+s`
-
-The menu bar will automatically update to show your current hotkey combinations.
 
 ## 🔍 Troubleshooting
 
@@ -193,7 +190,7 @@ Mac Power Tools:
 
 ## 📊 System Requirements
 
-- **Operating System**: macOS 10.15 (Catalina) or later
+- **Operating System**: macOS 10.15 or later
 - **Architecture**: Intel x64 or Apple Silicon (Universal)
 - **Memory**: < 50MB RAM usage
 - **Storage**: < 5MB application size
@@ -204,7 +201,7 @@ Mac Power Tools:
 1. **Install**: Use Homebrew or build manually
 2. **Launch**: Open `/Applications/MacPowerTools.app`
 3. **Grant permissions**: Follow the automatic prompts
-4. **Look for**: The ⚡ icon in your menu bar
+4. **Look for**: The ⌬ icon in your menu bar
 5. **Try**: `Cmd+Shift+T` for text extraction
 6. **Try**: `Cmd+Shift+V` for clipboard history with auto-paste
 
@@ -212,4 +209,4 @@ Mac Power Tools:
 
 **Enjoy your enhanced Mac productivity!** ⚡
 
-*Mac Power Tools brings essential Windows PowerToys functionality to macOS with automatic setup and seamless integration.*
+*Mac Power Tools brings essential productivity enhancements to macOS with automatic setup and seamless integration.*

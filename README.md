@@ -39,13 +39,20 @@ cp -r $(brew --prefix)/opt/macpowertools/MacPowerTools.app /Applications/
 open /Applications/MacPowerTools.app
 ```
 
-### 2. Grant Permissions (Automatic)
-When you first launch the app, it will automatically:
-- Request **Screen Recording** permission (for text extraction)
-- Request **Accessibility** permission (for global hotkeys and pasting)
-- Show a dialog to guide you through the permission setup
+**If you get SHA256 errors when updating:**
+```bash
+# Refresh the tap and try again
+brew untap charsree/tools
+brew tap charsree/tools
+brew install macpowertools
+```
 
-**That's it!** The app will appear as a **⚡ lightning bolt icon** in your menu bar.
+### 2. Grant Permissions (When Needed)
+Mac Power Tools uses a **smart permission system**:
+  - **Screen Recording**: When you first use text extraction (Cmd+Shift+T)
+  - **Accessibility**: When you first use clipboard history (Cmd+Shift+V)
+
+**That's it!** The app will appear as a **⌬ diamond icon** in your menu bar.
 
 ## 🎯 Usage
 
@@ -63,34 +70,38 @@ When you first launch the app, it will automatically:
 4. Items with 🎨 indicator have rich formatting preserved
 
 ### Menu Bar Interface
-Click the ⚡ icon to access:
+Click the ⌬ icon to access:
 - Text extraction functionality
 - Recent clipboard items (last 5)
 - Full clipboard history window
 - Clear history option
+- **Custom hotkey preferences**
+- **Login items management**
 
-## 🔒 Permissions (Handled Automatically)
+## 🔒 Permissions (Smart System)
 
-The app will automatically request these permissions on first launch:
+The app uses a **smart permission system** with no startup dialogs:
 
 ### Screen Recording Permission
 - **Purpose**: Capture screenshots for text extraction
-- **When prompted**: Click "Allow" or go to System Preferences → Privacy & Security → Screen Recording
+- **When requested**: Only when you first use Cmd+Shift+T (or custom hotkey)
+- **System dialog**: macOS shows standard permission request
 
 ### Accessibility Permission  
-- **Purpose**: Global hotkeys (`Cmd+Shift+T`, `Cmd+Shift+V`) and auto-paste functionality
-- **When prompted**: Click "Allow" or go to System Preferences → Privacy & Security → Accessibility
+- **Purpose**: Global hotkeys and auto-paste functionality
+- **When requested**: Only when you first use Cmd+Shift+V (or custom hotkey)
+- **System dialog**: macOS shows standard permission request
 
-**Important**: After granting permissions, restart the app for full functionality.
+**Clean Experience**: No permission popups on startup - only when you actually use the features!
 
-## 🔄 Auto-Start Setup
+## 🚀 Login Items Management
 
-To make Mac Power Tools start automatically when you log in:
+**Easy Management**: Built into the menu bar
+1. Click the ⌬ icon in your menu bar
+2. Select **"Add to Login Items..."** or **"Remove from Login Items"**
+3. Menu automatically updates based on current status
 
-**Option 1: Automatic (when installing via Homebrew)**
-The app automatically adds itself to login items.
-
-**Option 2: Manual Setup**
+**Manual Setup** (alternative):
 1. **System Preferences** → **Users & Groups** → **Login Items**
 2. Click **+** and add `/Applications/MacPowerTools.app`
 
@@ -121,10 +132,23 @@ open /Applications/MacPowerTools.app
 
 ## 📋 Keyboard Shortcuts Reference
 
-| Action | Shortcut | Description |
+| Action | Default Shortcut | Description |
 |--------|----------|-------------|
 | Extract Text | `Cmd+Shift+T` | Capture screenshot and extract text |
 | Clipboard History | `Cmd+Shift+V` | Show clipboard history and paste selected item |
+
+### 🎛️ Custom Hotkeys
+You can customize both hotkeys through the **Preferences** menu:
+1. Click the ⚡ icon in your menu bar
+2. Select **"Preferences..."**
+3. Modify the hotkey combinations in the text fields
+4. Click **"Save"** to apply changes immediately
+
+**Supported modifiers**: `cmd`, `shift`, `alt`/`option`, `ctrl`/`control`
+**Supported keys**: Any letter `a-z`
+**Examples**: `cmd+alt+t`, `ctrl+shift+v`, `cmd+option+s`
+
+The menu bar will automatically update to show your current hotkey combinations.
 
 ## 🔍 Troubleshooting
 

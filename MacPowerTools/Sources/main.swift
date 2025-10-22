@@ -15,6 +15,24 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
     let maxHistoryItems = 50
     var isPasting = false
     
+    // Hotkey preferences
+    var textExtractorKey: String {
+        get { UserDefaults.standard.string(forKey: "textExtractorKey") ?? "t" }
+        set { UserDefaults.standard.set(newValue, forKey: "textExtractorKey") }
+    }
+    var textExtractorModifiers: String {
+        get { UserDefaults.standard.string(forKey: "textExtractorModifiers") ?? "cmd+shift" }
+        set { UserDefaults.standard.set(newValue, forKey: "textExtractorModifiers") }
+    }
+    var clipboardKey: String {
+        get { UserDefaults.standard.string(forKey: "clipboardKey") ?? "v" }
+        set { UserDefaults.standard.set(newValue, forKey: "clipboardKey") }
+    }
+    var clipboardModifiers: String {
+        get { UserDefaults.standard.string(forKey: "clipboardModifiers") ?? "cmd+shift" }
+        set { UserDefaults.standard.set(newValue, forKey: "clipboardModifiers") }
+    }
+    
     struct ClipboardItem {
         let content: String
         let rtfData: Data?
@@ -37,52 +55,12 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        checkAndRequestPermissions()
         setupStatusBar()
         registerGlobalHotkeys()
         startClipboardMonitoring()
         print("Mac Power Tools started!")
         print("📝 Text Extractor: Press Cmd+Shift+T")
         print("📋 Clipboard History: Press Cmd+Shift+V")
-    }
-    
-    func checkAndRequestPermissions() {
-        // Check Screen Recording permission
-        let screenRecordingGranted = CGPreflightScreenCaptureAccess()
-        if !screenRecordingGranted {
-            showNotification(title: "Permission Required", message: "Please grant Screen Recording permission in System Preferences")
-            CGRequestScreenCaptureAccess()
-        }
-        
-        // Check Accessibility permission
-        let accessibilityGranted = AXIsProcessTrusted()
-        if !accessibilityGranted {
-            showNotification(title: "Permission Required", message: "Please grant Accessibility permission in System Preferences")
-            
-            // Request accessibility permission
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
-            AXIsProcessTrustedWithOptions(options as CFDictionary)
-        }
-        
-        if !screenRecordingGranted || !accessibilityGranted {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.showPermissionAlert()
-            }
-        }
-    }
-    
-    func showPermissionAlert() {
-        let alert = NSAlert()
-        alert.messageText = "Permissions Required"
-        alert.informativeText = "Mac Power Tools needs:\n\n• Screen Recording (for text extraction)\n• Accessibility (for global hotkeys and pasting)\n\nPlease grant these permissions in System Preferences and restart the app."
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Open System Preferences")
-        alert.addButton(withTitle: "OK")
-        
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy")!)
-        }
     }
     
     func setupStatusBar() {
@@ -95,40 +73,57 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         ])
         
         statusItem?.button?.attributedTitle = attributedTitle
-        statusItem?.button?.toolTip = "Mac Power Tools - Cmd+Shift+T (Text) | Cmd+Shift+V (Clipboard)"
+        statusItem?.button?.toolTip = "Mac Power Tools - \(textExtractorModifiers.replacingOccurrences(of: "+", with: "+").capitalized)+\(textExtractorKey.uppercased()) (Text) | \(clipboardModifiers.replacingOccurrences(of: "+", with: "+").capitalized)+\(clipboardKey.uppercased()) (Clipboard)"
+        
+        // Add target-action to refresh menu when clicked
+        statusItem?.button?.target = self
+        statusItem?.button?.action = #selector(statusBarClicked)
         
         updateStatusBarMenu()
     }
     
+    @objc func statusBarClicked() {
+        updateStatusBarMenu()
+        statusItem?.popUpMenu(statusItem!.menu!)
+    }
+    
     func registerGlobalHotkeys() {
-        // Register Text Extractor hotkey (Cmd+Shift+T)
+        // Unregister existing hotkeys
+        if let textRef = textExtractorHotKeyRef {
+            UnregisterEventHotKey(textRef)
+        }
+        if let clipRef = clipboardHistoryHotKeyRef {
+            UnregisterEventHotKey(clipRef)
+        }
+        
+        // Register Text Extractor hotkey
         var textHotKeyID = EventHotKeyID()
         textHotKeyID.signature = fourCharCodeFrom("TXTE")
         textHotKeyID.id = 1
         
-        let textModifiers = UInt32(cmdKey | shiftKey)
-        let textKeyCode = UInt32(kVK_ANSI_T)
+        let textModifiers = parseModifiers(textExtractorModifiers)
+        let textKeyCode = parseKeyCode(textExtractorKey)
         
         let textStatus = RegisterEventHotKey(textKeyCode, textModifiers, textHotKeyID, GetApplicationEventTarget(), 0, &textExtractorHotKeyRef)
         if textStatus != noErr {
             print("Failed to register Text Extractor hotkey. Status: \(textStatus)")
         } else {
-            print("Successfully registered Cmd+Shift+T for Text Extractor")
+            print("Successfully registered \(textExtractorModifiers)+\(textExtractorKey) for Text Extractor")
         }
         
-        // Register Clipboard History hotkey (Cmd+Shift+V)
+        // Register Clipboard History hotkey
         var clipHotKeyID = EventHotKeyID()
         clipHotKeyID.signature = fourCharCodeFrom("CLIP")
         clipHotKeyID.id = 2
         
-        let clipModifiers = UInt32(cmdKey | shiftKey)
-        let clipKeyCode = UInt32(kVK_ANSI_V)
+        let clipModifiers = parseModifiers(clipboardModifiers)
+        let clipKeyCode = parseKeyCode(clipboardKey)
         
         let clipStatus = RegisterEventHotKey(clipKeyCode, clipModifiers, clipHotKeyID, GetApplicationEventTarget(), 0, &clipboardHistoryHotKeyRef)
         if clipStatus != noErr {
             print("Failed to register Clipboard History hotkey. Status: \(clipStatus)")
         } else {
-            print("Successfully registered Cmd+Shift+V for Clipboard History")
+            print("Successfully registered \(clipboardModifiers)+\(clipboardKey) for Clipboard History")
         }
         
         // Install event handler for both hotkeys
@@ -264,6 +259,13 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
     // MARK: - Text Extractor Functions
     
     @objc func captureAndExtractText() {
+        // Check permission first, request if needed
+        if !CGPreflightScreenCaptureAccess() {
+            CGRequestScreenCaptureAccess()
+            showNotification(title: "Permission Required", message: "Please grant Screen Recording permission and restart the app")
+            return
+        }
+        
         captureScreenshot { [weak self] image in
             guard let image = image else {
                 self?.showNotification(title: "Error", message: "Failed to capture screenshot")
@@ -341,12 +343,12 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         
         // Text Extractor section
         menu.addItem(NSMenuItem(title: "Text Extractor", action: nil, keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "   Extract Text (Cmd+Shift+T)", action: #selector(captureAndExtractText), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "   Extract Text (\(textExtractorModifiers.replacingOccurrences(of: "+", with: "+").capitalized)+\(textExtractorKey.uppercased()))", action: #selector(captureAndExtractText), keyEquivalent: ""))
         
         menu.addItem(NSMenuItem.separator())
         
         // Clipboard History section
-        menu.addItem(NSMenuItem(title: "Clipboard History", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Clipboard History (\(clipboardModifiers.replacingOccurrences(of: "+", with: "+").capitalized)+\(clipboardKey.uppercased()))", action: nil, keyEquivalent: ""))
         
         if clipboardHistory.isEmpty {
             menu.addItem(NSMenuItem(title: "   No clipboard history", action: nil, keyEquivalent: ""))
@@ -359,13 +361,20 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
             }
             
             if clipboardHistory.count > 5 {
-                menu.addItem(NSMenuItem(title: "   Show All History (Cmd+Shift+V)", action: #selector(showClipboardHistory), keyEquivalent: ""))
+                menu.addItem(NSMenuItem(title: "   Show All History (\(clipboardModifiers.replacingOccurrences(of: "+", with: "+").capitalized)+\(clipboardKey.uppercased()))", action: #selector(showClipboardHistory), keyEquivalent: ""))
             }
         }
         
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Clear Clipboard History", action: #selector(clearHistory), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
+        // Login items menu
+        if isInLoginItems() {
+            menu.addItem(NSMenuItem(title: "Remove from Login Items", action: #selector(removeFromLoginItems), keyEquivalent: ""))
+        } else {
+            menu.addItem(NSMenuItem(title: "Add to Login Items...", action: #selector(openLoginItemsSettings), keyEquivalent: ""))
+        }
+        menu.addItem(NSMenuItem(title: "Preferences...", action: #selector(showPreferences), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "Quit Mac Power Tools", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         
         statusItem?.menu = menu
@@ -437,6 +446,202 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         clipboardHistory.removeAll()
         updateStatusBarMenu()
         showNotification(title: "History Cleared", message: "Clipboard history has been cleared")
+    }
+    
+    @objc func openLoginItemsSettings() {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
+    }
+    
+    func isInLoginItems() -> Bool {
+        let script = """
+        tell application "System Events"
+            set loginItemNames to name of every login item
+            return loginItemNames contains "MacPowerTools"
+        end tell
+        """
+        
+        if let appleScript = NSAppleScript(source: script) {
+            let result = appleScript.executeAndReturnError(nil)
+            let isPresent = result.booleanValue
+            print("DEBUG: Login items check - MacPowerTools present: \(isPresent)")
+            return isPresent
+        }
+        print("DEBUG: AppleScript failed")
+        return false
+    }
+    
+    @objc func removeFromLoginItems() {
+        let script = """
+        tell application "System Events"
+            delete every login item whose path contains "MacPowerTools"
+        end tell
+        """
+        
+        if let appleScript = NSAppleScript(source: script) {
+            var error: NSDictionary?
+            appleScript.executeAndReturnError(&error)
+            if error == nil {
+                showNotification(title: "Removed from Login Items", message: "Mac Power Tools will not start automatically")
+                updateStatusBarMenu()
+            }
+        }
+    }
+    
+    @objc func showPreferences() {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+                             styleMask: [.titled, .closable],
+                             backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.title = "Mac Power Tools Preferences"
+        window.center()
+        
+        let contentView = NSView(frame: window.contentView!.bounds)
+        
+        // Text Extractor settings
+        let textLabel = NSTextField(labelWithString: "Text Extractor Hotkey:")
+        textLabel.frame = NSRect(x: 20, y: 220, width: 150, height: 20)
+        contentView.addSubview(textLabel)
+        
+        let textModField = NSTextField(frame: NSRect(x: 180, y: 220, width: 100, height: 20))
+        textModField.stringValue = textExtractorModifiers
+        textModField.isEditable = true
+        textModField.isSelectable = true
+        textModField.isBezeled = true
+        textModField.bezelStyle = .squareBezel
+        textModField.tag = 1
+        contentView.addSubview(textModField)
+        
+        let textKeyField = NSTextField(frame: NSRect(x: 290, y: 220, width: 50, height: 20))
+        textKeyField.stringValue = textExtractorKey
+        textKeyField.isEditable = true
+        textKeyField.isSelectable = true
+        textKeyField.isBezeled = true
+        textKeyField.bezelStyle = .squareBezel
+        textKeyField.tag = 2
+        contentView.addSubview(textKeyField)
+        
+        // Clipboard settings
+        let clipLabel = NSTextField(labelWithString: "Clipboard History Hotkey:")
+        clipLabel.frame = NSRect(x: 20, y: 180, width: 150, height: 20)
+        contentView.addSubview(clipLabel)
+        
+        let clipModField = NSTextField(frame: NSRect(x: 180, y: 180, width: 100, height: 20))
+        clipModField.stringValue = clipboardModifiers
+        clipModField.isEditable = true
+        clipModField.isSelectable = true
+        clipModField.isBezeled = true
+        clipModField.bezelStyle = .squareBezel
+        clipModField.tag = 3
+        contentView.addSubview(clipModField)
+        
+        let clipKeyField = NSTextField(frame: NSRect(x: 290, y: 180, width: 50, height: 20))
+        clipKeyField.stringValue = clipboardKey
+        clipKeyField.isEditable = true
+        clipKeyField.isSelectable = true
+        clipKeyField.isBezeled = true
+        clipKeyField.bezelStyle = .squareBezel
+        clipKeyField.tag = 4
+        contentView.addSubview(clipKeyField)
+        
+        // Help text
+        let helpLabel = NSTextField(labelWithString: "Format: 'cmd+shift', 'cmd+alt', 'ctrl+shift', etc.")
+        helpLabel.frame = NSRect(x: 20, y: 140, width: 360, height: 20)
+        helpLabel.textColor = .secondaryLabelColor
+        contentView.addSubview(helpLabel)
+        
+        // Buttons
+        let saveButton = NSButton(frame: NSRect(x: 220, y: 20, width: 80, height: 30))
+        saveButton.title = "Save"
+        saveButton.bezelStyle = .rounded
+        saveButton.target = self
+        saveButton.action = #selector(savePreferences(_:))
+        contentView.addSubview(saveButton)
+        
+        let cancelButton = NSButton(frame: NSRect(x: 310, y: 20, width: 80, height: 30))
+        cancelButton.title = "Cancel"
+        cancelButton.bezelStyle = .rounded
+        cancelButton.target = self
+        cancelButton.action = #selector(closePreferences(_:))
+        contentView.addSubview(cancelButton)
+        
+        window.contentView = contentView
+        window.level = .modalPanel
+        window.orderFrontRegardless()
+        window.makeKey()
+        NSApp.activate(ignoringOtherApps: true)
+    }
+    
+    @objc func savePreferences(_ sender: NSButton) {
+        guard let window = sender.window,
+              let contentView = window.contentView else { return }
+        
+        for subview in contentView.subviews {
+            if let textField = subview as? NSTextField {
+                switch textField.tag {
+                case 1: textExtractorModifiers = textField.stringValue
+                case 2: textExtractorKey = textField.stringValue
+                case 3: clipboardModifiers = textField.stringValue
+                case 4: clipboardKey = textField.stringValue
+                default: break
+                }
+            }
+        }
+        
+        registerGlobalHotkeys()
+        updateStatusBarMenu()
+        window.close()
+        showNotification(title: "Preferences Saved", message: "Hotkeys updated successfully")
+    }
+    
+    @objc func closePreferences(_ sender: NSButton) {
+        sender.window?.close()
+    }
+    
+    func parseModifiers(_ modString: String) -> UInt32 {
+        var mods: UInt32 = 0
+        let parts = modString.lowercased().components(separatedBy: "+")
+        for part in parts {
+            switch part.trimmingCharacters(in: .whitespaces) {
+            case "cmd", "command": mods |= UInt32(cmdKey)
+            case "shift": mods |= UInt32(shiftKey)
+            case "alt", "option": mods |= UInt32(optionKey)
+            case "ctrl", "control": mods |= UInt32(controlKey)
+            default: break
+            }
+        }
+        return mods
+    }
+    
+    func parseKeyCode(_ key: String) -> UInt32 {
+        switch key.lowercased() {
+        case "a": return UInt32(kVK_ANSI_A)
+        case "b": return UInt32(kVK_ANSI_B)
+        case "c": return UInt32(kVK_ANSI_C)
+        case "d": return UInt32(kVK_ANSI_D)
+        case "e": return UInt32(kVK_ANSI_E)
+        case "f": return UInt32(kVK_ANSI_F)
+        case "g": return UInt32(kVK_ANSI_G)
+        case "h": return UInt32(kVK_ANSI_H)
+        case "i": return UInt32(kVK_ANSI_I)
+        case "j": return UInt32(kVK_ANSI_J)
+        case "k": return UInt32(kVK_ANSI_K)
+        case "l": return UInt32(kVK_ANSI_L)
+        case "m": return UInt32(kVK_ANSI_M)
+        case "n": return UInt32(kVK_ANSI_N)
+        case "o": return UInt32(kVK_ANSI_O)
+        case "p": return UInt32(kVK_ANSI_P)
+        case "q": return UInt32(kVK_ANSI_Q)
+        case "r": return UInt32(kVK_ANSI_R)
+        case "s": return UInt32(kVK_ANSI_S)
+        case "t": return UInt32(kVK_ANSI_T)
+        case "u": return UInt32(kVK_ANSI_U)
+        case "v": return UInt32(kVK_ANSI_V)
+        case "w": return UInt32(kVK_ANSI_W)
+        case "x": return UInt32(kVK_ANSI_X)
+        case "y": return UInt32(kVK_ANSI_Y)
+        case "z": return UInt32(kVK_ANSI_Z)
+        default: return UInt32(kVK_ANSI_T) // fallback
+        }
     }
     
     // MARK: - Utility Functions

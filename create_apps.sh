@@ -5,6 +5,10 @@
 
 echo "📦 Creating macOS Application Bundle..."
 
+# Kill existing processes and remove old app
+pkill MacPowerTools 2>/dev/null || true
+rm -rf "MacPowerTools.app" 2>/dev/null || true
+
 # Create MacPowerTools.app
 echo "⌬ Creating MacPowerTools.app..."
 mkdir -p "MacPowerTools.app/Contents/MacOS"
@@ -35,9 +39,9 @@ cat > "MacPowerTools.app/Contents/Info.plist" << 'EOF'
     <key>CFBundleDisplayName</key>
     <string>Mac Power Tools</string>
     <key>CFBundleVersion</key>
-    <string>1.0</string>
+    <string>2.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>2.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -66,19 +70,23 @@ echo "📍 Created Application:"
 echo "   • MacPowerTools.app - Double-click to run"
 echo ""
 echo "🚀 Features in one app:"
-echo "   📝 Text Extractor: Cmd+Shift+T to extract text from screenshots"
-echo "   📋 Clipboard History: Cmd+Shift+V to view clipboard history with formatting"
+echo "   📝 Text Extractor: Customizable hotkeys (default Cmd+Shift+T)"
+echo "   📋 Clipboard History: Customizable hotkeys (default Cmd+Shift+V)"
+echo "   🎛️ Custom Hotkeys: Configure via Preferences menu"
+echo "   🔐 Smart Permissions: Only requested when needed"
+echo "   🚀 Login Items: Easy management via menu bar"
 echo ""
 echo "🚀 Usage:"
 echo "   1. Double-click MacPowerTools.app to launch"
-echo "   2. App runs in background with ⚡ menu bar icon"
+echo "   2. App runs in background with ⌬ menu bar icon"
 echo "   3. To share: Just copy the .app file to other Macs"
 echo ""
-echo "💡 Auto-start setup:"
-echo "   System Preferences → Users & Groups → Login Items"
-echo "   Add MacPowerTools.app to start automatically on login"
+echo "💡 Menu Bar Features:"
+echo "   • Text extraction and clipboard history"
+echo "   • Custom hotkey preferences"
+echo "   • Login items management"
+echo "   • Clean, no-popup startup"
 echo ""
-echo "🔒 First run permissions:"
-echo "   System Preferences → Security & Privacy → Privacy"
-echo "   - Add MacPowerTools.app to 'Accessibility'"
-echo "   - Add MacPowerTools.app to 'Screen Recording'"
+echo "🎛️ Custom Hotkeys:"
+echo "   Click ⌬ menu bar icon → Preferences to customize hotkeys"
+echo "   Supports: cmd, shift, alt/option, ctrl/control + any letter a-z"

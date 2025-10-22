@@ -1,4 +1,4 @@
-# Mac Power Tools ⚡
+# Mac Power Tools
 
 A powerful macOS utility that brings Windows PowerToys-like functionality to your Mac in a single, unified application.
 

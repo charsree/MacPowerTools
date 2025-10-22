@@ -10,12 +10,6 @@ echo "🔨 Building Mac Power Tools..."
 # Kill existing processes
 pkill MacPowerTools 2>/dev/null || true
 
-# Remove existing app from Applications
-if [ -d "/Applications/MacPowerTools.app" ]; then
-    echo "🗑️ Removing existing MacPowerTools.app from Applications..."
-    rm -rf "/Applications/MacPowerTools.app"
-fi
-
 # Create build directory
 mkdir -p build
 

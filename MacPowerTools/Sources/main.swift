@@ -4,8 +4,9 @@ import Cocoa
 import Vision
 import Carbon
 import AVFoundation
+import ServiceManagement
 
-class MacPowerToolsApp: NSObject, NSApplicationDelegate {
+class MacPowerToolsApp: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var statusItem: NSStatusItem?
     var clipboardHistory: [ClipboardItem] = []
     var lastClipboardChangeCount: Int = 0
@@ -17,7 +18,7 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
     
     // Hotkey preferences
     var textExtractorKey: String {
-        get { UserDefaults.standard.string(forKey: "textExtractorKey") ?? "t" }
+        get { UserDefaults.standard.string(forKey: "textExtractorKey") ?? "y" }
         set { UserDefaults.standard.set(newValue, forKey: "textExtractorKey") }
     }
     var textExtractorModifiers: String {
@@ -37,20 +38,47 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         let content: String
         let rtfData: Data?
         let htmlData: Data?
+        // TIFF bytes for image items. Preserved as TIFF (the canonical NSPasteboard
+        // image format); PNG output is derived from this on paste/export.
+        let imageData: Data?
         let timestamp: Date
         let preview: String
         let hasFormatting: Bool
-        
+        let isImage: Bool
+
         init(content: String, rtfData: Data? = nil, htmlData: Data? = nil) {
             self.content = content
             self.rtfData = rtfData
             self.htmlData = htmlData
+            self.imageData = nil
             self.timestamp = Date()
             self.hasFormatting = rtfData != nil || htmlData != nil
-            
+            self.isImage = false
+
             // Create preview (first 50 characters) with formatting indicator
             let basePreview = String(content.prefix(50)).replacingOccurrences(of: "\n", with: " ")
             self.preview = hasFormatting ? "[F] \(basePreview)" : basePreview
+        }
+
+        init(imageData: Data) {
+            self.content = ""
+            self.rtfData = nil
+            self.htmlData = nil
+            self.imageData = imageData
+            self.timestamp = Date()
+            self.hasFormatting = false
+            self.isImage = true
+
+            // Decode just enough to render a useful preview. NSImage avoids hand-parsing
+            // TIFF; if it fails we fall back to a generic label rather than dropping the item.
+            if let img = NSImage(data: imageData) {
+                let w = Int(img.size.width)
+                let h = Int(img.size.height)
+                let kb = (imageData.count + 512) / 1024
+                self.preview = "[IMG] \(w)×\(h) (\(kb) KB)"
+            } else {
+                self.preview = "[IMG] (\(imageData.count) bytes)"
+            }
         }
     }
     
@@ -59,7 +87,7 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         registerGlobalHotkeys()
         startClipboardMonitoring()
         print("Mac Power Tools started!")
-        print("📝 Text Extractor: Press Cmd+Shift+T")
+        print("📝 Text Extractor: Press Cmd+Shift+Y")
         print("📋 Clipboard History: Press Cmd+Shift+V")
     }
     
@@ -161,6 +189,8 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
             let rtfData = NSPasteboard.general.data(forType: .rtf)
             let htmlData = NSPasteboard.general.data(forType: .html)
             addToHistoryWithFormatting(initialContent, rtfData: rtfData, htmlData: htmlData)
+        } else if let initialImage = imageDataFromPasteboard(NSPasteboard.general) {
+            addToHistoryWithImage(initialImage)
         }
         
         timer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
@@ -176,34 +206,68 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         
         if currentChangeCount != lastClipboardChangeCount {
             lastClipboardChangeCount = currentChangeCount
-            
+
             if let clipboardString = pasteboard.string(forType: .string),
                !clipboardString.isEmpty,
                clipboardString.count < 10000 {
-                
+
                 let rtfData = pasteboard.data(forType: .rtf)
                 let htmlData = pasteboard.data(forType: .html)
-                
+
                 addToHistoryWithFormatting(clipboardString, rtfData: rtfData, htmlData: htmlData)
-                
+
                 let formatInfo = (rtfData != nil || htmlData != nil) ? " (with formatting)" : ""
                 print("Added to clipboard history: \(String(clipboardString.prefix(50)))\(formatInfo)...")
+            } else if let imageData = imageDataFromPasteboard(pasteboard) {
+                // Skip if the new image bytes match the most recent image item — many apps
+                // (Preview, Finder) re-stamp the same TIFF when nothing actually changed.
+                if let last = clipboardHistory.first, last.isImage, last.imageData == imageData {
+                    return
+                }
+                addToHistoryWithImage(imageData)
+                print("Added image to clipboard history: \(imageData.count) bytes")
             }
         }
     }
-    
+
+    /// Returns TIFF bytes for the current image on the pasteboard, if any. Prefers TIFF
+    /// (the canonical pasteboard image type); falls back to converting PNG via NSImage
+    /// for sources that publish PNG only.
+    func imageDataFromPasteboard(_ pasteboard: NSPasteboard) -> Data? {
+        if let tiff = pasteboard.data(forType: .tiff) {
+            return tiff
+        }
+        if let png = pasteboard.data(forType: .png),
+           let image = NSImage(data: png),
+           let tiff = image.tiffRepresentation {
+            return tiff
+        }
+        return nil
+    }
+
     func addToHistoryWithFormatting(_ content: String, rtfData: Data?, htmlData: Data?) {
-        if let lastItem = clipboardHistory.first, lastItem.content == content {
+        if let lastItem = clipboardHistory.first, lastItem.content == content, !lastItem.isImage {
             return
         }
-        
+
         let newItem = ClipboardItem(content: content, rtfData: rtfData, htmlData: htmlData)
         clipboardHistory.insert(newItem, at: 0)
-        
+
         if clipboardHistory.count > maxHistoryItems {
             clipboardHistory = Array(clipboardHistory.prefix(maxHistoryItems))
         }
-        
+
+        updateStatusBarMenu()
+    }
+
+    func addToHistoryWithImage(_ imageData: Data) {
+        let newItem = ClipboardItem(imageData: imageData)
+        clipboardHistory.insert(newItem, at: 0)
+
+        if clipboardHistory.count > maxHistoryItems {
+            clipboardHistory = Array(clipboardHistory.prefix(maxHistoryItems))
+        }
+
         updateStatusBarMenu()
     }
     
@@ -392,21 +456,28 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
     
     @objc func showFullHistoryWindow() {
         let window = createHistoryWindow()
-        window.makeKeyAndOrderFront(nil)
+        // See showPreferences for the .regular/.accessory dance. Without this the window
+        // appears but can't accept clicks/keystrokes in an LSUIElement app.
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
     }
     
     func createHistoryWindow() -> NSWindow {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 600, height: 400),
-            styleMask: [.titled, .closable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         
         window.title = "Mac Power Tools - Clipboard History"
         window.center()
-        
+        // Window delegate restores .accessory activation policy when the user closes
+        // the window, so the app stops appearing in the Dock and Cmd-Tab afterwards.
+        window.delegate = self
+        window.isReleasedWhenClosed = false
+
         let scrollView = NSScrollView(frame: window.contentView!.bounds)
         scrollView.autoresizingMask = [.width, .height]
         scrollView.hasVerticalScroller = true
@@ -449,41 +520,50 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
     }
     
     @objc func openLoginItemsSettings() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
-    }
-    
-    func isInLoginItems() -> Bool {
-        let script = """
-        tell application "System Events"
-            set loginItemNames to name of every login item
-            return loginItemNames contains "MacPowerTools"
-        end tell
-        """
-        
-        if let appleScript = NSAppleScript(source: script) {
-            let result = appleScript.executeAndReturnError(nil)
-            let isPresent = result.booleanValue
-            print("DEBUG: Login items check - MacPowerTools present: \(isPresent)")
-            return isPresent
+        // SMAppService.mainApp.register() actually adds the app to login items without
+        // any prompt or System Settings round-trip. Available macOS 13+. The previous
+        // "open Settings and let the user toggle" flow couldn't observe the result,
+        // which is why "Add" never flipped to "Remove".
+        if #available(macOS 13.0, *) {
+            do {
+                try SMAppService.mainApp.register()
+                showNotification(title: "Added to Login Items", message: "Mac Power Tools will start automatically")
+                updateStatusBarMenu()
+            } catch {
+                // Fall back to opening Settings if SMAppService refuses (e.g. unsigned binary).
+                print("SMAppService.register failed: \(error)")
+                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
+            }
+        } else {
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
         }
-        print("DEBUG: AppleScript failed")
+    }
+
+    /// Whether MacPowerTools is registered as a login item.
+    ///
+    /// Old code asked System Events via AppleScript; modern macOS blocks that without
+    /// a TCC prompt and `executeAndReturnError(nil)` swallowed the failure, so the
+    /// menu always read "Add to Login Items..." even after adding. SMAppService
+    /// reports the truth without any permission needed.
+    func isInLoginItems() -> Bool {
+        if #available(macOS 13.0, *) {
+            return SMAppService.mainApp.status == .enabled
+        }
         return false
     }
-    
+
     @objc func removeFromLoginItems() {
-        let script = """
-        tell application "System Events"
-            delete every login item whose path contains "MacPowerTools"
-        end tell
-        """
-        
-        if let appleScript = NSAppleScript(source: script) {
-            var error: NSDictionary?
-            appleScript.executeAndReturnError(&error)
-            if error == nil {
+        if #available(macOS 13.0, *) {
+            do {
+                try SMAppService.mainApp.unregister()
                 showNotification(title: "Removed from Login Items", message: "Mac Power Tools will not start automatically")
                 updateStatusBarMenu()
+            } catch {
+                print("SMAppService.unregister failed: \(error)")
+                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
             }
+        } else {
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
         }
     }
     
@@ -494,6 +574,7 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         window.isReleasedWhenClosed = false
         window.title = "Mac Power Tools Preferences"
         window.center()
+        window.delegate = self
         
         let contentView = NSView(frame: window.contentView!.bounds)
         
@@ -565,10 +646,19 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         contentView.addSubview(cancelButton)
         
         window.contentView = contentView
-        window.level = .modalPanel
-        window.orderFrontRegardless()
-        window.makeKey()
+
+        // LSUIElement apps default to .accessory, which means windows can't become key
+        // and text fields don't accept input. Temporarily promote to .regular so the
+        // preferences window behaves like a normal app window (focusable, editable).
+        // Restored to .accessory in closePreferences/savePreferences.
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        // Land first-responder on the first editable field so the user can immediately
+        // edit the modifier without an extra click.
+        if let firstField = contentView.subviews.first(where: { ($0 as? NSTextField)?.isEditable == true }) {
+            window.makeFirstResponder(firstField)
+        }
     }
     
     @objc func savePreferences(_ sender: NSButton) {
@@ -590,11 +680,21 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
         registerGlobalHotkeys()
         updateStatusBarMenu()
         window.close()
+        // Drop back to menu-bar-only mode so the app stops appearing in the Dock and Cmd-Tab.
+        NSApp.setActivationPolicy(.accessory)
         showNotification(title: "Preferences Saved", message: "Hotkeys updated successfully")
     }
-    
+
     @objc func closePreferences(_ sender: NSButton) {
         sender.window?.close()
+        NSApp.setActivationPolicy(.accessory)
+    }
+
+    // NSWindowDelegate: when the user closes the history or preferences window via
+    // the red close button (or any other path that doesn't go through our buttons),
+    // drop activation policy back to .accessory so the app returns to menu-bar-only.
+    func windowWillClose(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
     }
     
     func parseModifiers(_ modString: String) -> UInt32 {
@@ -655,13 +755,28 @@ class MacPowerToolsApp: NSObject, NSApplicationDelegate {
     func copyToClipboardWithFormatting(_ item: ClipboardItem) {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        
+
+        if item.isImage, let tiff = item.imageData {
+            // Write TIFF (universal) plus PNG (preferred by web targets and most modern
+            // editors). Skipping PNG would still work — most consumers can re-encode from
+            // TIFF — but publishing both means zero-conversion for the common case.
+            pasteboard.setData(tiff, forType: .tiff)
+            if let image = NSImage(data: tiff),
+               let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+                let rep = NSBitmapImageRep(cgImage: cgImage)
+                if let png = rep.representation(using: .png, properties: [:]) {
+                    pasteboard.setData(png, forType: .png)
+                }
+            }
+            return
+        }
+
         pasteboard.setString(item.content, forType: .string)
-        
+
         if let rtfData: Data = item.rtfData {
             pasteboard.setData(rtfData, forType: .rtf)
         }
-        
+
         if let htmlData: Data = item.htmlData {
             pasteboard.setData(htmlData, forType: .html)
         }

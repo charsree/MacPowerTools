@@ -7,7 +7,7 @@ A powerful macOS utility that enhances your productivity with advanced screen te
 **Mac Power Tools** combines two essential productivity features in one lightweight menu bar application:
 
 ### 📝 Text Extractor
-- **Keyboard Shortcut**: `Cmd+Shift+T`
+- **Keyboard Shortcut**: `Cmd+Shift+Y`
 - Capture any area of your screen and extract text using Apple's Vision framework
 - Automatically copies extracted text to clipboard
 - Supports multiple languages with automatic detection
@@ -28,7 +28,7 @@ A powerful macOS utility that enhances your productivity with advanced screen te
 
 | Action | Default Shortcut | Description |
 |--------|----------|-------------|
-| Extract Text | `Cmd+Shift+T` | Capture screenshot and extract text |
+| Extract Text | `Cmd+Shift+Y` | Capture screenshot and extract text |
 | Clipboard History | `Cmd+Shift+V` | Show clipboard history and paste selected item |
 
 ### 🎛️ Custom Hotkeys
@@ -69,7 +69,7 @@ brew install macpowertools
 
 ### 2. Grant Permissions (When Needed)
 Mac Power Tools uses a **smart permission system**:
-  - **Screen Recording**: When you first use text extraction (Cmd+Shift+T)
+  - **Screen Recording**: When you first use text extraction (Cmd+Shift+Y)
   - **Accessibility**: When you first use clipboard history (Cmd+Shift+V)
 
 **That's it!** The app will appear as a **⌬ diamond icon** in your menu bar.
@@ -77,7 +77,7 @@ Mac Power Tools uses a **smart permission system**:
 ## 🎯 Usage
 
 ### Text Extractor
-1. Press `Cmd+Shift+T` anywhere on your Mac
+1. Press `Cmd+Shift+Y` anywhere on your Mac
 2. Your cursor changes to a crosshair - drag to select the text area
 3. The app processes the screenshot and extracts text
 4. Extracted text is automatically copied to your clipboard
@@ -102,7 +102,7 @@ Click the ⌬ icon to access:
 
 ### Screen Recording Permission
 - **Purpose**: Capture screenshots for text extraction
-- **When requested**: When you first use Cmd+Shift+T (or custom hotkey)
+- **When requested**: When you first use Cmd+Shift+Y (or custom hotkey)
 - **System dialog**: macOS shows standard permission request
 
 ### Accessibility Permission  
@@ -202,7 +202,7 @@ Mac Power Tools:
 2. **Launch**: Open `/Applications/MacPowerTools.app`
 3. **Grant permissions**: Follow the automatic prompts
 4. **Look for**: The ⌬ icon in your menu bar
-5. **Try**: `Cmd+Shift+T` for text extraction
+5. **Try**: `Cmd+Shift+Y` for text extraction
 6. **Try**: `Cmd+Shift+V` for clipboard history with auto-paste
 
 ---

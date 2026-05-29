@@ -39,9 +39,9 @@ cat > "MacPowerTools.app/Contents/Info.plist" << 'EOF'
     <key>CFBundleDisplayName</key>
     <string>Mac Power Tools</string>
     <key>CFBundleVersion</key>
-    <string>2.0</string>
+    <string>2.1</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.0</string>
+    <string>2.1</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -60,9 +60,20 @@ cat > "MacPowerTools.app/Contents/Info.plist" << 'EOF'
     <string>public.app-category.utilities</string>
     <key>NSHumanReadableCopyright</key>
     <string>© 2025 Mac Power Tools</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>Mac Power Tools needs to capture a screenshot of the region you select so it can extract the text inside.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Mac Power Tools uses Apple Events to manage login items.</string>
 </dict>
 </plist>
 EOF
+
+# IMPORTANT: do NOT add a manual `codesign --sign - --identifier ...` step here.
+# `swiftc` linker-signs the binary automatically with cdhash Identifier=MacPowerTools,
+# which is what TCC has already learned to trust on this machine for Screen Recording
+# and Accessibility. Re-signing with a different identifier (or even the same one with
+# --force --deep) gives the bundle a NEW cdhash, and macOS treats the rebuild as a
+# different app — the user has to re-grant every permission and gets prompted again.
 
 echo "✅ Application bundle created!"
 echo ""
@@ -70,7 +81,7 @@ echo "📍 Created Application:"
 echo "   • MacPowerTools.app - Double-click to run"
 echo ""
 echo "🚀 Features in one app:"
-echo "   📝 Text Extractor: Customizable hotkeys (default Cmd+Shift+T)"
+echo "   📝 Text Extractor: Customizable hotkeys (default Cmd+Shift+Y)"
 echo "   📋 Clipboard History: Customizable hotkeys (default Cmd+Shift+V)"
 echo "   🎛️ Custom Hotkeys: Configure via Preferences menu"
 echo "   🔐 Smart Permissions: Only requested when needed"

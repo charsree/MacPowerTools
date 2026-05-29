@@ -64,7 +64,7 @@ open /Applications/MacPowerTools.app
 ## Usage
 
 ### Keyboard Shortcuts
-- **Cmd+Shift+T**: Extract text from screenshot
+- **Cmd+Shift+Y**: Extract text from screenshot
 - **Cmd+Shift+V**: Show clipboard history and paste selected item
 
 ### Menu Bar

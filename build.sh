@@ -29,7 +29,7 @@ if [ $? -eq 0 ]; then
     echo "   • MacPowerTools - Combined Text Extractor + Clipboard History"
     echo ""
     echo "🚀 Features:"
-    echo "   📝 Text Extractor: Customizable hotkeys (default Cmd+Shift+T)"
+    echo "   📝 Text Extractor: Customizable hotkeys (default Cmd+Shift+Y)"
     echo "   📋 Clipboard History: Customizable hotkeys (default Cmd+Shift+V)"
     echo "   🎛️ Custom Hotkeys: Configurable via Preferences menu"
     echo "   🚀 Login Items: Easy add/remove via menu bar"
